@@ -85,22 +85,6 @@ SEISOBR_PATH = "D:/Work/seis/seisobr"
 CHANNELS = ("N", "E", "Z")
 
 
-# profiles azimutes from station HRM
-PROFILES = {
-    1: (245, 300), # 40
-    2: (320, 360), # 40
-    3: (20, 50),   # 25
-    # east
-    4: (80, 117),  # 35
-    # south
-    5: (117, 235),
-}
-
-
-LIMITS = {
-}
-
-
 def calculate(Freq, f1, f2, stream, secondsE, secondsP, secondsS, azBA):
     """ расчет параметров коды """
     # load settings
@@ -514,37 +498,6 @@ def write_output_excel_file(**kwargs):
             for col, item in enumerate(items):
                 sheet.write(row, col, item)
             row += 1
-        #===
-        for profil in profil_result.keys():
-            x, y1, y2 = profil_result[profil]
-            x = np.array(x)
-            # there are limits for every profil
-            #limit_min, limit_max = LIMITS[profil]
-            # find where to take values
-            #indexes = np.where( (x >= limit_min) & (x <= limit_max))
-            #x = x[indexes]
-            # для каждого профиля строить график
-            fig, axes = plt.subplots(nrows=2)
-            for ax, y, name, V in zip(axes, [y1, y2], ["P", "S"], [Settings["vp"], Settings["vs"]]):
-                # calc regression (polyfit)
-                y = np.array(y)
-                #y = y[indexes]
-                m, b = np.polyfit(x, y, 1)
-                Y = m * x + b
-                ax.set_title("Profil {} ({}). Freq = {}".format(profil, name, freq))
-                ax.plot(x, y, 'ro', label="x-y")
-                ax.plot(x, Y, "-k")
-                # add equation label
-                ax.legend([r"$y=%.5f x + %.5f$" % (m, b)], framealpha=0.5)
-                # Далее рассчитать сами значения добротности Q
-                Q = -1 * np.pi * freq / (V * m)
-                print freq, profil, x.size,
-                print "%.5f" % m,
-                print("Q{0}={1:.3f}".format(name, Q))
-            #plt.show()
-            outimagename = "png/profil_{}__{}_{}.png".format(profil, freq_num, freq)
-            plt.savefig(outimagename)
-            plt.close()
         freq_num += 1
     # save results
     # filename must consist StationName, algorithm etc
@@ -590,10 +543,10 @@ if __name__ == '__main__':
     conn, cursor = setup_db_conn(database_filename)
     # загрузить данные в БД
     if Settings["calc"]:
-        #try:
-        load_data_into_db(data)
-        #except pyodbc.Error as e:
-        #    print(e)
+        try:
+            load_data_into_db(data)
+        except pyodbc.Error as e:
+            print(e)
         # also lets create (or clean) tables for results
         for query in ("DROP TABLE calc", CREATE_TABLE_CALC_SQL):
             try:
